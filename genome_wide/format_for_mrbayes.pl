@@ -21,7 +21,13 @@
 
 B<aln_dirs>               input alignment directory.  This is a directory containing the subdirectories produced my Mavid/Mercator
 
-=item -b
+=item -b                  
+
+B<bin_size>                bin size for group partitioning [e.g. 100000 ]
+
+=item -g 
+
+B<outgroup name>          The name of the outgroup in your alignments
 
 =item -h
 
@@ -60,8 +66,8 @@ use warnings;
 use Getopt::Std;
 use File::Find::Rule;
 
-our ($opt_i, $opt_b, $opt_h);
-getopts("i:b:h");
+our ($opt_i, $opt_b, $opt_g, $opt_h);
+getopts("i:b:g:h");
 
 if (!$opt_i && !$opt_b && !$opt_h) {
     print "Please give options. See help.\n\n";
@@ -72,6 +78,9 @@ if ($opt_h) {
     help();
 }
 
+if (!$opt_b) { $opt_b = 100000; }
+if (!$opt_g) { $opt_g = "potato" ; }
+my $outgroup = $opt_g;
 ### Get the arguments and check them
 my $dir = $opt_i || die("An input alignment directory was not given (-i <aln_dir>).\n");
 
@@ -88,7 +97,10 @@ my $sequence;
 
 foreach my $file (@files){
     chomp $file;
-  
+     if ( !( -s $file ) ) {
+         print "File size = 0, skipping $file \n" ;
+         next();
+    }
      #Open input file                                                                                                                                                               
     open (INALN, "<$file") || die "Cannot open nexus file.\n";
 
@@ -106,7 +118,7 @@ foreach my $file (@files){
 	    $sequence .= "format interleave=yes datatype=dna gap=-;";
 	}
 
-	elsif($line  =~ /(dimensions ntax=5 nchar=)(.*)(;)/){
+	elsif($line  =~ /(dimensions ntax=.* nchar=)(.*)(;)/){
 	    $end_coord = $2;
 	    $sequence .= $line;
 	}
@@ -172,7 +184,7 @@ foreach my $file (@files){
 	push (@exclude_sets, $include);	
 
 	#Print final Mr. Bayes analysis stanza                                                                                                                                
-	print OUTFILE "Outgroup potato;\n";
+	print OUTFILE "Outgroup $outgroup;\n";
 	print OUTFILE "mcmc Mcmcdiagn=yes ngen=200000 samplefreq=100 printfreq=1000 diagnfreq=5000 relburnin=yes burninfrac=0.2 nchains=3 temp=0.25 nruns=3;\n";
 	print OUTFILE "sumt burnin=250 calctreeprobs=yes showtreeprobs=yes;\n";                                   print OUTFILE "lset applyto=(all) nst=6 rates=invgamma;\n";
 	print OUTFILE "prset applyto=(all) ratepr=variable topologypr=uniform ;\n";                               print OUTFILE "end;\n";
@@ -207,12 +219,13 @@ sub help {
  
   Usage:
        
-       format4mrbayes.pl [-h] -i <aln_dir> [-b bin_size]
+       format4mrbayes.pl [-h] -i <aln_dir> [-b bin_size] -g [OUTGROUP NAME]
 
      Flags:
 
       -i <aln_dir>        input dir (mandatory)
       -b <bin_size>       bin size to partition alignment
+      -g <outgroup_name>  name of your outgroup as it appears in the nexus files
       -h <help>           print the help
      
 
