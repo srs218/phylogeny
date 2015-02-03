@@ -36,13 +36,18 @@ foreach my $dir (@dirs){
 	print "No tree probablities found for dir " . $dir . "\n";
     }
 
+    my @mb_files = glob("$dir/*.mb");
+    my $mb_file = $mb_files[0];
     my $mb_path = $dir . "/mavid.phy.gap_removed.nexus.nexus.mb";
-  
+    if ( ! (-e $mb_file ) ) {
+	print STDERR "Partitions file does not exist for directory $dir\n";
+	next;
+    }
     ##open genome coordinate mapping file  
     open (INCOORD, "<$gen_coord") || die "Cannot open genome coordinate file.\n";
 
     ##open Mr. Bayes partitions file
-    open (PART, "<$mb_path") || die "Cannot open partitions file for directory $dir. \n";
+    open (PART, "<$mb_file") || die "Cannot open partitions file for directory $dir. \n";
    
     ##hash for genome coordinate mapping file content
     my %coord_ids;
@@ -86,7 +91,7 @@ foreach my $dir (@dirs){
 	my $filename = basename($bayes_file);
 	my $path2mb = dirname($bayes_file);
 
-	$path2mb =~ /(.*)(\/)([0-9]{1,3})/;
+	$path2mb =~ /(.*)(\/)([0-9]{1,4})/;
 	my $curr_group = $3;
 
 	$filename =~ s/.*(group.*)\.nexus.trprobs/$1/;
