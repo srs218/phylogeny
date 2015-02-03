@@ -110,10 +110,10 @@ my $suffix = $opt_s || $in_format;
 my $dir = $opt_d ;
 
 if ( !$inaln_file && !$dir ) { die("Must provide input alignment file ( -i )  or an input directory ( -d ).\n"); }
-if ( $inaln_file && $dir ) { die("Can on;y provide on option. Input alignemnt file ( -i ) OR input directory ( -d ). \n"); }
+if ( $inaln_file && $dir ) { die("Can only provide one option. Input alignemnt file ( -i ) OR input directory ( -d ). \n"); }
 my $ref = $opt_r  || die("must provide reference sequence name from the alignment(s) ( -r ) . \n");
 my @files;
-print STDERR "dir = $dir suff = $suffix \n";
+if ($dir) { print STDERR "dir = $dir suff = $suffix \n"; }
 
 if ($inaln_file) {
     @files = ( $inaln_file ) ;
@@ -135,6 +135,10 @@ foreach my $file (@files) {
     my $basename = basename($file , ( $suffix, $in_format ) ) ;
     my $out_format = $opt_z;
     my $out_name  = $opt_o || $dirname . "/" .  $basename . "degap." . $out_format;
+    if ( -e "$out_name" && -s "$out_name" ) {
+	print "File $out_name exists. Skipping \n\n";
+	next();
+    }
     print "De-gapping file $file . outfile = $out_name \n";
 
     my $out_aln = Bio::AlignIO->new( 
